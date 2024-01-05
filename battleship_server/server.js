@@ -8,7 +8,7 @@ app.use(express.json());
 
 app.get("/rnd", (req, res) => {
   var board = [
-    [2, 3, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -138,22 +138,79 @@ app.get("/rnd", (req, res) => {
   res.json({ board: board });
 });
 
-app.post("/check", (req, res) => {
-  var playerBoard = req.body.playerBoard;
+app.post("/player", (req, res) => {
+  var guess = req.body.guess;
   var col = req.body.col;
   var row = req.body.row;
   var enemyBoard = req.body.enemyBoard;
 
-  console.log(req.body);
-
   if (enemyBoard[row][col] == 1) {
-    playerBoard[row][col] = 3;
+    guess[row][col] = 3;
   } else if (enemyBoard[row][col] == 0) {
-    playerBoard[row][col] = 2;
+    guess[row][col] = 2;
   }
 
+  res.json({ board: guess });
+});
+
+app.post("/enemy", (req, res) => {
+  var playerBoard = req.body.playerBoard;
+  var flag = true;
+  while (flag == true) {
+    var row = random(10);
+    var col = random(10);
+    if (playerBoard[row][col] != 2 && playerBoard[row][col] != 3) {
+      if (playerBoard[row][col] == 0) {
+        playerBoard[row][col] = 2;
+      } else {
+        playerBoard[row][col] = 3;
+      }
+      flag = false;
+    }
+  }
   res.json({ board: playerBoard });
 });
+
+app.post("/win", (req, res) => {
+  var board = req.body.board;
+  var result = false;
+  var cnt = 0;
+  for (i = 0; i < 10; i++) {
+    for (y = 0; y < 10; y++) {
+      if (board[i][y] == 3) {
+        cnt += 1;
+      }
+    }
+  }
+  if (cnt == 24) {
+    result = true;
+  }
+  res.json({ result: result });
+});
+
+// app.post("/check", (req, res) => {
+//   var board = req.body.board;
+//   var result = false;
+
+//   check(5, 1);
+// })
+
+// function check(len, count, board){
+//   cnt = 0;
+//   for(i = 0; i < (10 - len) + 1; i++){
+//     for(y = 0; y < 10; y++){
+//       if(i == 0){
+//         if(y == 0){
+//           for(z = 0; z < len + 1; z++){
+//             if(board[i + z][y] == 1)
+
+//             board[i + z][y + 1]
+//           }
+//         }
+//       }
+//     }
+//   }
+// }
 
 function direction() {
   //0 = horizontal

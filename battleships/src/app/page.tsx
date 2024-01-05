@@ -35,22 +35,79 @@ export default function Home() {
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
   ]);
 
+  const [enemyData, setEnemyData] = useState([
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  ]);
+
+  const [win, setWin] = useState("");
+
   useEffect(() => {
     fetch("http://localhost:8000/rnd")
       .then((res) => res.json())
       .then((data) => setPlayerData(data.board));
+
+    fetch("http://localhost:8000/rnd")
+      .then((res) => res.json())
+      .then((data) => setEnemyData(data.board));
   }, []);
 
   async function check(row: any, col: any) {
     const data = {
-      playerBoard: guess,
+      guess: guess,
       col: col,
       row: row,
-      enemyBoard: playerData,
+      enemyBoard: enemyData,
     };
-    axios
-      .post("http://localhost:8000/check", data)
-      .then((response) => setGuess(response.data.board));
+    axios.post("http://localhost:8000/player", data).then((response) => {
+      setGuess(response.data.board);
+      if (response.data.board[row][col] == 2) {
+        enemyTurn();
+      } else {
+        const data2 = {
+          board: response.data.board,
+        };
+        axios.post("http://localhost:8000/win", data2).then((response) => {
+          if (response.data.result == true) {
+            setWin("Player Won!");
+          }
+        });
+      }
+    });
+  }
+
+  async function enemyTurn() {
+    const data = {
+      playerBoard: playerData,
+    };
+    try {
+      axios
+        .post("http://localhost:8000/enemy", data)
+        .then((response) => {
+          setPlayerData(response.data.board);
+          const data2 = {
+            board: response.data.board,
+          };
+          axios.post("http://localhost:8000/win", data2).then((response) => {
+            if (response.data.result == true) {
+              setWin("Computer Won!");
+            }
+          });
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   return (
@@ -59,7 +116,7 @@ export default function Home() {
         <div className="... w-full basis-1/12 bg2"></div>
         <div className="... w-full basis-10/12 bg1 items-center">
           <div className="... w-full h-full flex flex-row justify-center items-center">
-            <div className="... h-5/6 rounded-2xl w-full basis-6/12 bg2 items-center justify-center mx-4">
+            <div className="... h-5/6 rounded-2xl w-full basis-4/12 bg2 items-center justify-center mx-4">
               <table width="440">
                 <tbody>
                   <tr>
@@ -83,7 +140,7 @@ export default function Home() {
                 </tbody>
               </table>
             </div>
-            <div className="... h-5/6 rounded-2xl w-full basis-6/12 bg2 items-center mx-4">
+            <div className="... h-5/6 rounded-2xl w-full basis-4/12 bg2 items-center mx-4">
               <table width="440">
                 <tbody>
                   <tr>
@@ -111,6 +168,35 @@ export default function Home() {
                       ))}
                     </tr>
                   ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="... h-5/6 rounded-2xl w-full basis-4/12 bg2 items-center justify-center mx-4">
+              <h3>{win}</h3>
+              <table width="440">
+                <tbody>
+                  <tr>
+                    <td className="sea">
+                      <button>O</button>
+                    </td>
+                    <td>Empty field that can be clicked</td>
+                  </tr>
+                  <tr>
+                    <td className="sea"></td>
+                    <td>Empty field</td>
+                  </tr>
+                  <tr>
+                    <td className="sea">X</td>
+                    <td>Missed field</td>
+                  </tr>
+                  <tr>
+                    <td className="ship"></td>
+                    <td>Healty ship tile</td>
+                  </tr>
+                  <tr>
+                    <td className="destShip"></td>
+                    <td>Destroyed ship tile</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
